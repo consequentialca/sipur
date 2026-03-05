@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Cormorant+SC:wght@400;600&display=swap');
+
+:root {
+  --cream: #f5e6c8;
+  --gold: #d4af37;
+  --ink: #0a0910;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: radial-gradient(ellipse at 30% 20%, #1a1228 0%, #0a0910 50%, #06070f 100%);
+  min-height: 100vh;
+  color: var(--cream);
+  font-family: 'Cormorant Garamond', Georgia, serif;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 1; }
+}
+
+.animate-fade-in { animation: fadeIn 0.7s ease forwards; }
+.animate-pulse-slow { animation: pulse 1.5s ease-in-out infinite; }
