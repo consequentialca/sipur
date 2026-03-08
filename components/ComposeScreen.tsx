@@ -26,9 +26,9 @@ type ColorKey = keyof typeof CHIP_COLORS;
 
 // ─── Sub-components ───────────────────────────────────────────
 
-function Chip({ color, label, value, onTap, onClear }: {
+function Chip({ color, label, value, onTap, onClear, multiline }: {
   color: ColorKey; label: string; value: string | null;
-  onTap: () => void; onClear?: () => void;
+  onTap: () => void; onClear?: () => void; multiline?: boolean;
 }) {
   const c = CHIP_COLORS[color];
   const [hovered, setHovered] = useState(false);
@@ -42,14 +42,16 @@ function Chip({ color, label, value, onTap, onClear }: {
       style={{
         display: "inline-flex", alignItems: "center", gap: 5,
         padding: "3px 11px 4px", borderRadius: 20, cursor: "pointer",
-        background: isEmpty ? "rgba(255,255,255,0.03)" : c.bg,
-        border: `1px solid ${isEmpty ? "rgba(255,255,255,0.12)" : c.border}`,
-        color: isEmpty ? "rgba(245,230,200,0.28)" : c.text,
+        background: c.bg,
+        border: `1px solid ${c.border}`,
+        color: isEmpty ? "rgba(245,230,200,0.35)" : c.text,
         fontFamily: "'Cormorant Garamond', Georgia, serif",
         fontSize: 17, fontStyle: isEmpty ? "italic" : "normal",
         fontWeight: isEmpty ? 400 : 600, letterSpacing: "0.02em",
         boxShadow: isEmpty ? "none" : `0 0 10px ${c.glow}`,
-        whiteSpace: "nowrap", userSelect: "none", transition: "all 0.25s",
+        whiteSpace: multiline ? "normal" : "nowrap",
+        wordBreak: multiline ? "break-word" : undefined,
+        userSelect: "none", transition: "all 0.25s",
       }}
     >
       {value || label}
@@ -171,7 +173,7 @@ function Selector({ options, color, onSelect, onClose, allowFreeform }: {
   );
 }
 
-function NameEntry({ onAdd, onClose }: {
+function AddChildPopover({ onAdd, onClose }: {
   onAdd: (c: Character) => void; onClose: () => void;
 }) {
   const [name, setName] = useState("");
@@ -179,6 +181,13 @@ function NameEntry({ onAdd, onClose }: {
   const canConfirm = name.trim().length > 0 && age.trim().length > 0;
   const confirm = () => {
     if (canConfirm) { onAdd({ name: name.trim().toUpperCase(), age: parseInt(age) }); onClose(); }
+  };
+
+  const inputStyle: React.CSSProperties = {
+    background: "rgba(255,255,255,0.04)", border: "1px solid rgba(100,160,220,0.3)",
+    borderRadius: 8, padding: "7px 12px", color: "#64a0dc",
+    fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 16,
+    outline: "none",
   };
 
   return (
@@ -191,62 +200,85 @@ function NameEntry({ onAdd, onClose }: {
         borderRadius: 14, padding: "14px 16px",
         display: "flex", flexDirection: "column", gap: 10, zIndex: 100,
         boxShadow: "0 20px 60px rgba(0,0,0,0.7)", animation: "fadeUp 0.16s ease",
-        minWidth: 210,
+        minWidth: 230,
       }}
     >
-      <input
-        autoFocus value={name}
-        onChange={(e) => setName(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && confirm()}
-        placeholder="Name"
-        style={{
-          background: "rgba(255,255,255,0.04)", border: "1px solid rgba(100,160,220,0.3)",
-          borderRadius: 8, padding: "7px 12px", color: "#64a0dc",
-          fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 16,
-          outline: "none", width: "100%",
-        }}
-      />
+      {/* Name + Age side by side */}
       <div style={{ display: "flex", gap: 8 }}>
+        <input
+          autoFocus value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && confirm()}
+          placeholder="Name"
+          style={{ ...inputStyle, flex: 1 }}
+        />
         <input
           value={age}
           onChange={(e) => setAge(e.target.value.replace(/\D/g, "").slice(0, 2))}
           onKeyDown={(e) => e.key === "Enter" && confirm()}
           placeholder="Age"
-          style={{
-            background: "rgba(255,255,255,0.04)", border: "1px solid rgba(100,160,220,0.3)",
-            borderRadius: 8, padding: "7px 12px", color: "#64a0dc",
-            fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 16,
-            outline: "none", width: 70,
-          }}
+          style={{ ...inputStyle, width: 58 }}
         />
-        <button
-          disabled={!canConfirm} onClick={confirm}
-          style={{
-            flex: 1, padding: "7px 12px", borderRadius: 8, border: "none",
-            background: canConfirm ? "rgba(100,160,220,0.2)" : "rgba(255,255,255,0.03)",
-            color: canConfirm ? "#64a0dc" : "rgba(255,255,255,0.15)",
-            fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 15,
-            fontWeight: 600, cursor: canConfirm ? "pointer" : "default",
-          }}
-        >Add</button>
       </div>
+      {/* Add to story button */}
+      <button
+        disabled={!canConfirm} onClick={confirm}
+        style={{
+          width: "100%", padding: "8px 12px", borderRadius: 8, border: "none",
+          background: canConfirm ? "rgba(100,160,220,0.2)" : "rgba(255,255,255,0.03)",
+          color: canConfirm ? "#64a0dc" : "rgba(255,255,255,0.15)",
+          fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 15,
+          fontWeight: 600, letterSpacing: "0.08em",
+          cursor: canConfirm ? "pointer" : "default", transition: "all 0.2s",
+        }}
+      >Add to story</button>
     </div>
   );
 }
 
-// ─── Demo generators (replace with real Daas chip generation) ─
+function NameChip({ character, onRemove }: {
+  character: Character; onRemove: () => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <span
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: "inline-flex", alignItems: "center", gap: 6,
+        padding: "3px 8px 4px 11px", borderRadius: 20,
+        background: "rgba(100,160,220,0.15)",
+        border: "1px solid rgba(100,160,220,0.45)",
+        color: "#64a0dc",
+        fontFamily: "'Cormorant Garamond', Georgia, serif",
+        fontSize: 17, fontStyle: "normal", fontWeight: 600,
+        letterSpacing: "0.02em",
+        boxShadow: "0 0 10px rgba(100,160,220,0.25)",
+        whiteSpace: "nowrap", userSelect: "none", transition: "all 0.25s",
+      }}
+    >
+      {character.name}
+      {/* Age pill */}
+      <span style={{
+        display: "inline-flex", alignItems: "center", justifyContent: "center",
+        background: "rgba(100,160,220,0.2)",
+        border: "1px solid rgba(100,160,220,0.3)",
+        borderRadius: 999, fontSize: 12, padding: "1px 7px",
+        fontWeight: 500, letterSpacing: "0.01em",
+      }}>
+        {character.age}
+      </span>
+      {/* ✕ clear */}
+      {hovered && (
+        <span
+          onClick={(e) => { e.stopPropagation(); onRemove(); }}
+          style={{ fontSize: 10, opacity: 0.5, cursor: "pointer", marginLeft: 1 }}
+        >✕</span>
+      )}
+    </span>
+  );
+}
 
-const DEMO = {
-  tones: [["Heartwarming"], ["Funny"], ["Funny", "Heartwarming"], ["Calm & Dreamy"]],
-  plots: [
-    "faced the disappointment of not becoming a kugel like their Zaidy — but discovered that being a karpas at the Seder is its own irreplaceable role",
-    "was the smallest candle on the menorah but gave the most light",
-    "got lost in the forest and found a hidden garden nobody else had ever seen",
-  ],
-  lessons: ["trusting your own unique path", "being brave when everything feels too big", "gratitude for the small gifts hiding in plain sight"],
-};
-
-function pick<T>(arr: T[]): T { return arr[Math.floor(Math.random() * arr.length)]; }
 
 // ─── ComposeScreen ────────────────────────────────────────────
 
@@ -278,14 +310,35 @@ export default function ComposeScreen({ initialSeed, loading, onConfirm }: {
   const setChipLoad = (key: string, val: boolean) =>
     setChipLoading((p) => ({ ...p, [key]: val }));
 
-  const generateChip = (key: string) => {
+  const generateChip = async (key: "tone" | "plot" | "lesson" | "character") => {
     setChipLoad(key, true);
-    setTimeout(() => {
-      if (key === "tone")   setTones(pick(DEMO.tones));
-      if (key === "plot")   setPlot(pick(DEMO.plots));
-      if (key === "lesson") setLesson(pick(DEMO.lessons));
+    try {
+      const res = await fetch("/api/suggest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          field: key,
+          // Exclude the field being generated so we don't pass stale/cleared value as context
+          context: {
+            tones: key === "tone" ? [] : tones,
+            characters: key === "character" ? [] : characters,
+            plot: key === "plot" ? "" : plot,
+            lesson: key === "lesson" ? "" : lesson,
+          },
+        }),
+      });
+      const data = await res.json();
+      if (key === "tone" && Array.isArray(data.value)) setTones(data.value);
+      if (key === "plot" && typeof data.value === "string") setPlot(data.value);
+      if (key === "lesson" && typeof data.value === "string") setLesson(data.value);
+      if (key === "character" && data.value?.name) {
+        setCharacters((p) => [...p, { name: String(data.value.name).toUpperCase(), age: Number(data.value.age) }]);
+      }
+    } catch {
+      // silently fail — field stays in its current state
+    } finally {
       setChipLoad(key, false);
-    }, 800 + Math.random() * 400);
+    }
   };
 
   const handleButton = () => {
@@ -310,7 +363,7 @@ export default function ComposeScreen({ initialSeed, loading, onConfirm }: {
     // Generate missing fields
     if (tones.length === 0)    generateChip("tone");
     if (characters.length === 0) {
-      setCharacters([{ name: "YOSSI", age: 8 }]); // placeholder — real app prompts name entry
+      generateChip("character");
     }
     if (!plot.trim())          generateChip("plot");
     if (!lesson.trim())        generateChip("lesson");
@@ -365,26 +418,28 @@ export default function ComposeScreen({ initialSeed, loading, onConfirm }: {
           <span style={{ fontStyle: "italic", opacity: 0.45 }}>story about</span>
 
           {/* NAMES */}
-          <div style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 4 }}
+          <div style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 5, flexWrap: "wrap" }}
             onClick={(e) => e.stopPropagation()}>
             {characters.map((c, i) => (
-              <span key={c.name} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+              <span key={c.name} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
                 {i > 0 && <span style={{ opacity: 0.25, fontSize: 13 }}>+</span>}
-                <Chip color="blue" label="name" value={`${c.name} (${c.age})`}
-                  onTap={() => {}}
-                  onClear={() => setCharacters((p) => p.filter((x) => x.name !== c.name))} />
+                <NameChip
+                  character={c}
+                  onRemove={() => setCharacters((p) => p.filter((x) => x.name !== c.name))}
+                />
               </span>
             ))}
-            <PlusButton onClick={() => setOpenSelector("name")} />
+            <Chip color="blue" label="child" value={null} onTap={() => setOpenSelector("name")} />
+            <SparkButton color="#64a0dc" loading={!!chipLoading.character} onClick={() => generateChip("character")} />
             {openSelector === "name" && (
-              <NameEntry onAdd={(c) => setCharacters((p) => [...p, c])} onClose={closeAll} />
+              <AddChildPopover onAdd={(c) => setCharacters((p) => [...p, c])} onClose={closeAll} />
             )}
           </div>
 
           <span style={{ fontStyle: "italic", opacity: 0.45 }}>, who</span>
 
           {/* PLOT */}
-          <div style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 4 }}
+          <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 4, width: "100%" }}
             onClick={(e) => e.stopPropagation()}>
             {openSelector === "plot" ? (
               <textarea
@@ -393,15 +448,16 @@ export default function ComposeScreen({ initialSeed, loading, onConfirm }: {
                 onBlur={() => setOpenSelector(null)}
                 rows={2}
                 style={{
+                  flex: 1, width: "100%", boxSizing: "border-box",
                   background: "rgba(100,180,120,0.1)", border: "1px solid rgba(100,180,120,0.4)",
                   borderRadius: 12, padding: "4px 12px", color: "#64b478",
                   fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 17,
-                  fontWeight: 600, outline: "none", resize: "none",
-                  minWidth: 200, maxWidth: 380, lineHeight: 1.5,
+                  fontWeight: 600, outline: "none", resize: "none", lineHeight: 1.5,
                 }}
               />
             ) : (
               <Chip color="green" label="what happens..." value={plot || null}
+                multiline
                 onTap={() => setOpenSelector("plot")}
                 onClear={plot ? () => setPlot("") : undefined} />
             )}
@@ -437,10 +493,6 @@ export default function ComposeScreen({ initialSeed, loading, onConfirm }: {
             <span style={{ fontSize: 10, letterSpacing: "0.22em", color: "rgba(245,230,200,0.25)", textTransform: "uppercase" }}>{label}</span>
           </div>
         ))}
-        <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-          <span style={{ fontSize: 9, color: "rgba(245,230,200,0.4)" }}>✦</span>
-          <span style={{ fontSize: 10, letterSpacing: "0.22em", color: "rgba(245,230,200,0.25)", textTransform: "uppercase" }}>Generate field</span>
-        </div>
       </div>
 
       {/* Smart button */}
