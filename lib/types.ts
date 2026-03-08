@@ -5,6 +5,8 @@ export interface Character {
   age: number;
 }
 
+export type StoryDuration = "3 min" | "5 min" | "10 min";
+
 export interface Seed {
   raw: string;
   tone: string[];
@@ -13,6 +15,7 @@ export interface Seed {
   lesson_label: string;
   lesson_source: "list_selected" | "freeform" | "generated";
   family_terms: string[];
+  duration: StoryDuration;
 }
 
 // ─── Daas Response Contract (frozen) ─────────────────────────

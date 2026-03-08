@@ -49,7 +49,7 @@ Stay inside the story world established by the premise.
 If the world is metaphorical (e.g. food characters), sustain it completely.
 
 FORMAT
-- Length: approximately 1,400 words (~10 minutes of narration)
+- Length: approximately ${({ "3 min": "420 words (~3 minutes)", "5 min": "700 words (~5 minutes)", "10 min": "1,400 words (~10 minutes)" })[seed.duration ?? "5 min"]} of narration
 - Flowing prose, no chapter breaks, no headers
 - No moral summary at the end — the lesson is felt, not concluded
 - The story ends with the child/children settled, known, and at peace

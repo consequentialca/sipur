@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Seed, Character } from "@/lib/types";
+import { Seed, Character, StoryDuration } from "@/lib/types";
 
 const TONES = ["Funny", "Heartwarming", "Cute", "Emotional", "Adventurous", "Calm & Dreamy"];
 const LESSONS = [
@@ -20,6 +20,7 @@ const CHIP_COLORS = {
   blue:   { bg: "rgba(100,160,220,0.15)", border: "rgba(100,160,220,0.45)", text: "#64a0dc", glow: "rgba(100,160,220,0.25)", hex: "#64a0dc" },
   green:  { bg: "rgba(100,180,120,0.15)", border: "rgba(100,180,120,0.45)", text: "#64b478", glow: "rgba(100,180,120,0.25)", hex: "#64b478" },
   purple: { bg: "rgba(180,120,220,0.15)", border: "rgba(180,120,220,0.45)", text: "#b478dc", glow: "rgba(180,120,220,0.25)", hex: "#b478dc" },
+  coral:  { bg: "rgba(210,100,80,0.15)",  border: "rgba(210,100,80,0.45)",  text: "#d26450", glow: "rgba(210,100,80,0.25)", hex: "#d26450" },
 };
 
 type ColorKey = keyof typeof CHIP_COLORS;
@@ -291,12 +292,13 @@ export default function ComposeScreen({ initialSeed, loading, onConfirm }: {
   const [characters, setCharacters] = useState<Character[]>(initialSeed?.characters ?? []);
   const [plot, setPlot] = useState(initialSeed?.plot ?? "");
   const [lesson, setLesson] = useState(initialSeed?.lesson_label ?? "");
+  const [duration, setDuration] = useState<StoryDuration | null>(initialSeed?.duration ?? null);
   const [openSelector, setOpenSelector] = useState<string | null>(null);
   const [chipLoading, setChipLoading] = useState<Record<string, boolean>>({});
 
   const closeAll = () => setOpenSelector(null);
 
-  const isEmpty = tones.length === 0 && characters.length === 0 && !plot && !lesson;
+  const isEmpty = tones.length === 0 && characters.length === 0 && !plot && !lesson && !duration;
   const isReady = tones.length > 0 && characters.length > 0 && plot.trim() && lesson.trim();
 
   const buttonLabel = loading
@@ -357,16 +359,16 @@ export default function ComposeScreen({ initialSeed, loading, onConfirm }: {
         lesson_label: lesson,
         lesson_source: "list_selected",
         family_terms: [],
+        duration: duration ?? "5 min",
       });
       return;
     }
     // Generate missing fields
-    if (tones.length === 0)    generateChip("tone");
-    if (characters.length === 0) {
-      generateChip("character");
-    }
-    if (!plot.trim())          generateChip("plot");
-    if (!lesson.trim())        generateChip("lesson");
+    if (tones.length === 0)      generateChip("tone");
+    if (characters.length === 0) generateChip("character");
+    if (!plot.trim())            generateChip("plot");
+    if (!lesson.trim())          generateChip("lesson");
+    if (!duration)               setDuration("5 min");
   };
 
   return (
@@ -412,6 +414,24 @@ export default function ComposeScreen({ initialSeed, loading, onConfirm }: {
             {openSelector === "tone" && (
               <Selector options={TONES.filter((t) => !tones.includes(t))} color="gold"
                 onSelect={(t) => setTones((p) => [...p, t])} onClose={closeAll} />
+            )}
+          </div>
+
+          <span style={{ fontStyle: "italic", opacity: 0.45 }}>,</span>
+
+          {/* DURATION */}
+          <div style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 4 }}
+            onClick={(e) => e.stopPropagation()}>
+            <Chip color="coral" label="duration" value={duration}
+              onTap={() => setOpenSelector("duration")}
+              onClear={duration ? () => setDuration(null) : undefined} />
+            {openSelector === "duration" && (
+              <Selector
+                options={["3 min", "5 min", "10 min"]}
+                color="coral"
+                onSelect={(d) => setDuration(d as StoryDuration)}
+                onClose={closeAll}
+              />
             )}
           </div>
 
@@ -487,7 +507,7 @@ export default function ComposeScreen({ initialSeed, loading, onConfirm }: {
 
       {/* Legend */}
       <div style={{ display: "flex", gap: 18, justifyContent: "center", marginBottom: 28, flexWrap: "wrap" }}>
-        {[["#d4af37","Tone"],["#64a0dc","Names"],["#64b478","Plot"],["#b478dc","Lesson"]].map(([color, label]) => (
+        {[["#d4af37","Tone"],["#d26450","Duration"],["#64a0dc","Names"],["#64b478","Plot"],["#b478dc","Lesson"]].map(([color, label]) => (
           <div key={label} style={{ display: "flex", alignItems: "center", gap: 5 }}>
             <div style={{ width: 5, height: 5, borderRadius: "50%", background: color, boxShadow: `0 0 5px ${color}` }} />
             <span style={{ fontSize: 10, letterSpacing: "0.22em", color: "rgba(245,230,200,0.25)", textTransform: "uppercase" }}>{label}</span>
