@@ -96,11 +96,15 @@ function PlusButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-function Selector({ options, color, onSelect, onClose }: {
+function Selector({ options, color, onSelect, onClose, allowFreeform }: {
   options: string[]; color: ColorKey;
   onSelect: (v: string) => void; onClose: () => void;
+  allowFreeform?: boolean;
 }) {
   const c = CHIP_COLORS[color];
+  const [input, setInput] = useState("");
+  const filtered = options.filter(o => o.toLowerCase().includes(input.toLowerCase()));
+
   return (
     <div
       onClick={(e) => e.stopPropagation()}
@@ -109,24 +113,60 @@ function Selector({ options, color, onSelect, onClose }: {
         transform: "translateX(-50%)",
         background: "rgba(10,8,16,0.98)", border: "1px solid rgba(245,230,200,0.1)",
         borderRadius: 14, padding: "10px 8px",
-        display: "flex", flexWrap: "wrap", gap: 6,
-        maxWidth: 290, zIndex: 100,
+        display: "flex", flexDirection: "column", gap: 8,
+        width: 290, zIndex: 100,
         boxShadow: "0 20px 60px rgba(0,0,0,0.7)",
         animation: "fadeUp 0.16s ease",
       }}
     >
-      {options.map((opt) => (
-        <span
-          key={opt}
-          onClick={() => { onSelect(opt); onClose(); }}
-          style={{
-            padding: "5px 12px", borderRadius: 16, cursor: "pointer",
-            background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)",
-            color: c.text, fontFamily: "'Cormorant Garamond', Georgia, serif",
-            fontSize: 15, fontWeight: 500, transition: "all 0.15s",
-          }}
-        >{opt}</span>
-      ))}
+      {allowFreeform && (
+        <div style={{ display: "flex", gap: 6 }}>
+          <input
+            autoFocus
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && input.trim()) {
+                onSelect(input.trim());
+                onClose();
+              }
+            }}
+            placeholder="Type anything..."
+            style={{
+              flex: 1, background: "rgba(255,255,255,0.04)",
+              border: `1px solid ${c.border}`,
+              borderRadius: 8, padding: "6px 10px",
+              color: c.text, fontFamily: "'Cormorant Garamond', Georgia, serif",
+              fontSize: 15, outline: "none",
+            }}
+          />
+          {input.trim() && (
+            <button
+              onClick={() => { onSelect(input.trim()); onClose(); }}
+              style={{
+                padding: "6px 12px", borderRadius: 8, border: "none",
+                background: `${c.bg}`, color: c.text,
+                fontFamily: "'Cormorant Garamond', Georgia, serif",
+                fontSize: 14, cursor: "pointer",
+              }}
+            >✓</button>
+          )}
+        </div>
+      )}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+        {filtered.map((opt) => (
+          <span
+            key={opt}
+            onClick={() => { onSelect(opt); onClose(); }}
+            style={{
+              padding: "5px 12px", borderRadius: 16, cursor: "pointer",
+              background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)",
+              color: c.text, fontFamily: "'Cormorant Garamond', Georgia, serif",
+              fontSize: 15, fontWeight: 500,
+            }}
+          >{opt}</span>
+        ))}
+      </div>
     </div>
   );
 }
@@ -380,7 +420,7 @@ export default function ComposeScreen({ initialSeed, loading, onConfirm }: {
             <SparkButton color="#b478dc" loading={!!chipLoading.lesson}
               onClick={() => { setLesson(""); generateChip("lesson"); }} />
             {openSelector === "lesson" && (
-              <Selector options={LESSONS} color="purple"
+              <Selector options={LESSONS} color="purple" allowFreeform
                 onSelect={(l) => setLesson(l)} onClose={closeAll} />
             )}
           </div>

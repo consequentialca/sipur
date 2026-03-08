@@ -75,7 +75,7 @@ OUTPUT FORMAT
 Return only valid JSON. No preamble, no explanation, no markdown fences.
 
 {
-  "story_brief": "<2-4 sentences. Warm enough for a parent to read as a preview. Precise enough for a story generator to execute from. Describes the opening condition, the arc, and what the moment of recognition feels like — without naming Sefirot or kabbalistic terms.>",
+  "story_brief": "<2-3 sentences maximum. Warm enough for a parent to read as a preview. No more than 60 words.>",
   "one_liner": "<One sentence. The essence of tonight's lesson in plain language. E.g. 'Tonight's lesson is about discovering the role only you can play.'>",
   "guardrails": ["<specific framing to avoid, derived from this seed>"],
   "age_register": "<Plain language guidance on depth, arc closure, and how explicitly moral weight can be carried. Based on youngest named child's age.>",

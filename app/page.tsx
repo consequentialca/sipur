@@ -13,6 +13,7 @@ const initialState: AppState = {
   seed: null,
   daas: null,
   story: null,
+  audioUrl: null,
   error: null,
 };
 
@@ -49,37 +50,53 @@ export default function Home() {
     setState((s) => ({ ...s, stage: "compose", daas: null }));
   }
 
-  // ── Stage 2: parent confirms → generate story ─────────────
+  // ── Stage 2: parent confirms → generate story + TTS ───────
   async function handleConfirmed() {
     if (!state.seed || !state.daas) return;
     setState((s) => ({ ...s, stage: "generating", error: null }));
 
     try {
-      const res = await fetch("/api/story", {
+      // Step 1: generate story
+      const storyRes = await fetch("/api/story", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ seed: state.seed, daas: state.daas }),
       });
 
-      if (!res.ok) throw new Error("Story generation failed");
-      const { story } = await res.json();
+      if (!storyRes.ok) throw new Error("Story generation failed");
+      const { story } = await storyRes.json();
 
-      setState((s) => ({ ...s, stage: "playback", story }));
+      // Step 2: fetch TTS (show "preparing" screen while this runs)
+      setState((s) => ({ ...s, stage: "preparing", story }));
+
+      const ttsRes = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ story }),
+      });
+
+      if (!ttsRes.ok) throw new Error("TTS generation failed");
+      const blob = await ttsRes.blob();
+      const audioUrl = URL.createObjectURL(blob);
+      setState((s) => ({ ...s, stage: "playback", audioUrl }));
     } catch (err) {
       setState((s) => ({
         ...s,
         stage: "confirm",
-        error: "Something went wrong generating the story. Please try again.",
+        error: "Something went wrong. Please try again.",
       }));
     }
   }
 
   // ── Start over ────────────────────────────────────────────
   function handleReset() {
+    // Revoke previous audio URL to free memory
+    if (state.audioUrl) URL.revokeObjectURL(state.audioUrl);
     setState(initialState);
   }
 
   return (
+    <>
     <main className="relative min-h-screen flex flex-col items-center justify-center px-6 py-10 overflow-hidden">
       <StarField />
 
@@ -168,12 +185,8 @@ export default function Home() {
           <GeneratingScreen daas={state.daas} />
         )}
 
-        {state.stage === "playback" && state.story && state.seed && (
-          <PlaybackScreen
-            story={state.story}
-            seed={state.seed}
-            onReset={handleReset}
-          />
+        {state.stage === "preparing" && state.daas && (
+          <GeneratingScreen daas={state.daas} label="Preparing the narration..." />
         )}
 
         {/* Footer */}
@@ -190,5 +203,17 @@ export default function Home() {
         </div>
       </div>
     </main>
+
+    {/* PlaybackScreen rendered outside all transform/opacity containers so position:fixed works */}
+    {state.stage === "playback" && state.story && state.seed && state.daas && state.audioUrl && (
+      <PlaybackScreen
+        story={state.story}
+        seed={state.seed}
+        daas={state.daas}
+        audioUrl={state.audioUrl}
+        onReset={handleReset}
+      />
+    )}
+    </>
   );
 }

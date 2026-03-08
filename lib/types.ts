@@ -28,16 +28,18 @@ export interface DaasResponse {
 // ─── App State ────────────────────────────────────────────────
 
 export type AppStage =
-  | "compose"    // user is building the seed sentence
+  | "compose"     // user is building the seed sentence
   | "classifying" // Stage 1 running — Daas call in flight
-  | "confirm"    // Daas returned — parent reviews one_liner + story_brief
-  | "generating" // Stage 2 running — story being written
-  | "playback";  // story ready — audio playing
+  | "confirm"     // Daas returned — parent reviews one_liner + story_brief
+  | "generating"  // Stage 2 running — story being written
+  | "preparing"   // story ready, TTS being fetched + durations measured
+  | "playback";   // audio ready — narration can begin
 
 export interface AppState {
   stage: AppStage;
   seed: Seed | null;
   daas: DaasResponse | null;
   story: string | null;
+  audioUrl: string | null;
   error: string | null;
 }

@@ -6,13 +6,41 @@ import { DaasResponse, Seed } from "@/lib/types";
 // Shown while Stage 2 (story generation) is in flight.
 // Displays the one_liner as a holding thought.
 
-export function GeneratingScreen({ daas }: { daas: DaasResponse }) {
+export function GeneratingScreen({ daas, label }: { daas: DaasResponse; label?: string }) {
   return (
     <div className="animate-fade-in" style={{ textAlign: "center", padding: "40px 0" }}>
+
+      {/* Orbiting ✦ star */}
       <div style={{
-        fontSize: 32, marginBottom: 24, opacity: 0.4,
-        animation: "pulse 2s ease-in-out infinite",
-      }}>✦</div>
+        position: "relative",
+        width: 80,
+        height: 80,
+        margin: "0 auto 24px",
+      }}>
+        <style>{`
+          @keyframes orbit {
+            0%   { transform: rotate(0deg)   translateX(28px) rotate(0deg);   opacity: 0.9; }
+            25%  { transform: rotate(90deg)  translateX(28px) rotate(-90deg);  opacity: 0.45; }
+            50%  { transform: rotate(180deg) translateX(28px) rotate(-180deg); opacity: 0.9; }
+            75%  { transform: rotate(270deg) translateX(28px) rotate(-270deg); opacity: 0.45; }
+            100% { transform: rotate(360deg) translateX(28px) rotate(-360deg); opacity: 0.9; }
+          }
+        `}</style>
+        <div style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          marginTop: -10,
+          marginLeft: -10,
+          animation: "orbit 4s linear infinite",
+          transformOrigin: "center center",
+          fontSize: 16,
+          color: "#d4af37",
+          textShadow: "0 0 8px rgba(212,175,55,0.9), 0 0 20px rgba(212,175,55,0.4)",
+          lineHeight: 1,
+          userSelect: "none",
+        }}>✦</div>
+      </div>
 
       <div style={{
         fontSize: 19, lineHeight: 1.6, color: "#d4af37",
@@ -26,7 +54,7 @@ export function GeneratingScreen({ daas }: { daas: DaasResponse }) {
         fontSize: 13, letterSpacing: "0.2em",
         color: "rgba(245,230,200,0.25)", textTransform: "uppercase",
       }}>
-        Weaving your story...
+        {label ?? "Weaving your story..."}
       </div>
     </div>
   );
