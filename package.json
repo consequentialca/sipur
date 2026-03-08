@@ -11,6 +11,7 @@
     "@anthropic-ai/sdk": "^0.39.0",
     "@elevenlabs/elevenlabs-js": "^2.38.0",
     "@fal-ai/client": "^1.9.4",
+    "@supabase/supabase-js": "^2.98.0",
     "next": "^16.1.6",
     "openai": "^6.26.0",
     "react": "^19.0.0",

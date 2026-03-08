@@ -25,6 +25,14 @@ export interface DaasResponse {
   corrected_lesson: string | null; // null if seed coherent; plain-language reframe if not
 }
 
+// ─── User Profile ─────────────────────────────────────────────
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  stories_generated: number;
+}
+
 // ─── App State ────────────────────────────────────────────────
 
 export type AppStage =

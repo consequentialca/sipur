@@ -50,6 +50,17 @@ FORMAT
 - No moral summary at the end — the lesson is felt, not concluded
 - The story ends with the child/children settled, known, and at peace
 - Write as if reading aloud at bedtime — unhurried, warm, present
+
+OPENING
+Begin with a warm, gentle narrative opener that eases the listener into the world —
+something in the spirit of "Once, not so long ago..." or "In a place not so far from here..."
+The exact phrasing should feel native to this particular story's world and tone.
+Never repeat the same opener across stories. Never be formulaic.
+
+CLOSING
+End with a single soft, reflective sentence — not a moral declaration, but a gentle
+observation or image that carries the lesson quietly into sleep. It should feel like
+a hand resting on a shoulder, not a finger wagging at the reader.
   `.trim();
 }
 
@@ -72,7 +83,7 @@ export async function generateStory(
       {
         role: "user",
         content:
-          "Write the story now. Begin with the opening scene — no preamble, no title. Drop directly into the world.",
+          "Write the story now. No title, no preamble. Open with your narrative opener, then drop into the world.",
       },
     ],
   });
