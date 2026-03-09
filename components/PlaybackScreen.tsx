@@ -135,13 +135,24 @@ export default function PlaybackScreen({ story, seed, daas, audioUrl, onReset }:
     }, 2000 / steps);
   };
 
-  // Set up narration audio from pre-fetched URL
+  // Set up narration audio from pre-fetched URL + auto-play on mount
   useEffect(() => {
     const audio = new Audio(audioUrl);
     audioRef.current = audio;
     audio.onloadedmetadata = () => setDuration(audio.duration);
     audio.ontimeupdate = () => setCurrentTime(audio.currentTime);
     audio.onended = () => { setPlaying(false); fadeOutAmbient(); };
+
+    // Auto-play: start ambient immediately, narration after 1s delay
+    const ambient = ambientRef.current;
+    if (ambient) {
+      ambient.volume = 0.15;
+      ambientStarted.current = true;
+      ambient.play().catch(() => {});
+    }
+    narrateTimeoutRef.current = setTimeout(() => {
+      audio.play().then(() => setPlaying(true)).catch(() => {});
+    }, 1000);
 
     return () => {
       if (narrateTimeoutRef.current) clearTimeout(narrateTimeoutRef.current);
@@ -242,7 +253,7 @@ export default function PlaybackScreen({ story, seed, daas, audioUrl, onReset }:
         width: "100%", height: "100vh",
         display: "flex", flexDirection: "column",
         alignItems: "center", justifyContent: "space-between",
-        padding: "36px 24px 40px",
+        padding: "36px 24px 160px",
       }}>
 
         {/* Top bar */}
@@ -285,7 +296,7 @@ export default function PlaybackScreen({ story, seed, daas, audioUrl, onReset }:
 
         {/* Story text */}
         <div className="sipur-fadeup-2" style={{
-          flex: 1, width: "100%", maxWidth: 380,
+          flex: 1, width: "100%", maxWidth: 320,
           display: "flex", flexDirection: "column", justifyContent: "center",
           padding: "20px 0",
         }}>
@@ -317,9 +328,9 @@ export default function PlaybackScreen({ story, seed, daas, audioUrl, onReset }:
               style={{
                 fontFamily: "'Crimson Pro', 'Crimson Text', Georgia, serif",
                 fontWeight: 300, fontStyle: "italic",
-                fontSize: 22, lineHeight: 1.75,
+                fontSize: 16, lineHeight: 1.75,
                 color: "#f5eed8", textAlign: "center",
-                maxHeight: 260, overflowY: "scroll",
+                maxHeight: 200, overflowY: "scroll",
                 position: "relative",
               }}
             >
@@ -343,8 +354,16 @@ export default function PlaybackScreen({ story, seed, daas, audioUrl, onReset }:
           </div>
         </div>
 
-        {/* Controls */}
-        <div className="sipur-fadeup-4" style={{ width: "100%", maxWidth: 380 }}>
+      </div>
+
+      {/* Controls — fixed to bottom of screen */}
+      <div className="sipur-fadeup-4" style={{
+        position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 20,
+        padding: "20px 24px 36px",
+        background: "linear-gradient(to top, rgba(10,8,24,0.98) 60%, transparent)",
+        display: "flex", flexDirection: "column", alignItems: "center",
+      }}>
+        <div style={{ width: "100%", maxWidth: 380 }}>
 
           {/* Progress bar */}
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 28 }}>

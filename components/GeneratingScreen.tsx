@@ -10,12 +10,32 @@ export function GeneratingScreen({ daas, label }: { daas: DaasResponse; label?: 
   return (
     <div className="animate-fade-in" style={{ textAlign: "center", padding: "40px 0" }}>
 
+      {/* Stage label — above orb */}
+      <div style={{
+        fontSize: 11, letterSpacing: "0.28em", textTransform: "uppercase",
+        color: "rgba(212,175,55,0.6)", marginBottom: 14,
+        textShadow: "0 0 10px rgba(212,175,55,0.5), 0 0 24px rgba(212,175,55,0.2)",
+        animation: "pulse 2s ease-in-out infinite alternate",
+      }}>
+        {label ?? "Weaving your story..."}
+      </div>
+
+      {/* one_liner — above orb */}
+      <div style={{
+        fontSize: 19, lineHeight: 1.6, color: "#d4af37",
+        fontStyle: "italic", fontWeight: 300,
+        letterSpacing: "0.02em", maxWidth: 460, margin: "0 auto 28px",
+        textShadow: "0 0 16px rgba(212,175,55,0.4), 0 0 40px rgba(212,175,55,0.15)",
+      }}>
+        {daas.one_liner}
+      </div>
+
       {/* Orbiting ✦ star */}
       <div style={{
         position: "relative",
         width: 80,
         height: 80,
-        margin: "0 auto 24px",
+        margin: "0 auto",
       }}>
         <style>{`
           @keyframes orbit {
@@ -40,21 +60,6 @@ export function GeneratingScreen({ daas, label }: { daas: DaasResponse; label?: 
           lineHeight: 1,
           userSelect: "none",
         }}>✦</div>
-      </div>
-
-      <div style={{
-        fontSize: 19, lineHeight: 1.6, color: "#d4af37",
-        fontStyle: "italic", fontWeight: 300, marginBottom: 16,
-        letterSpacing: "0.02em", maxWidth: 460, margin: "0 auto 16px",
-      }}>
-        {daas.one_liner}
-      </div>
-
-      <div style={{
-        fontSize: 13, letterSpacing: "0.2em",
-        color: "rgba(245,230,200,0.25)", textTransform: "uppercase",
-      }}>
-        {label ?? "Weaving your story..."}
       </div>
     </div>
   );

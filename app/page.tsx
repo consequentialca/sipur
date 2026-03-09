@@ -264,7 +264,7 @@ export default function Home() {
                 fontStyle: "italic",
               }}
             >
-              a bedtime story
+              your story told
             </div>
           </div>
 

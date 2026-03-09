@@ -17,17 +17,20 @@ function splitIntoChunks(text: string): string[] {
 
   while (remaining.length > MAX_CHUNK) {
     const window = remaining.slice(0, MAX_CHUNK);
-    const cut = window.lastIndexOf(". ");
+    const cut = window.lastIndexOf(".");
     if (cut === -1) {
-      chunks.push(remaining.slice(0, MAX_CHUNK).trim());
+      const chunk = remaining.slice(0, MAX_CHUNK).trim();
+      if (chunk.length > 0) chunks.push(chunk);
       remaining = remaining.slice(MAX_CHUNK).trim();
     } else {
-      chunks.push(remaining.slice(0, cut + 1).trim());
-      remaining = remaining.slice(cut + 2).trim();
+      const chunk = remaining.slice(0, cut + 1).trim();
+      if (chunk.length > 0) chunks.push(chunk);
+      remaining = remaining.slice(cut + 1).trim();
     }
   }
 
-  if (remaining.length > 0) chunks.push(remaining);
+  const last = remaining.trim();
+  if (last.length > 0) chunks.push(last);
   return chunks;
 }
 
