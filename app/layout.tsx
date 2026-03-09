@@ -4,6 +4,16 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Sipur — your story told",
   description: "bedtime stories with meaningful life lessons — designed by you.",
+  openGraph: {
+    title: "Sipur — your story told",
+    description: "bedtime stories with meaningful life lessons — designed by you.",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Sipur — your story told",
+    description: "bedtime stories with meaningful life lessons — designed by you.",
+  },
 };
 
 export default function RootLayout({
