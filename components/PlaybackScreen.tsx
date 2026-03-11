@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Seed, DaasResponse } from "@/lib/types";
 import { splitSentences } from "@/lib/sentences";
 
@@ -12,16 +13,23 @@ function fmt(secs: number): string {
 }
 
 
-export default function PlaybackScreen({ story, seed, daas, audioUrl, onReset }: {
+export default function PlaybackScreen({ story, seed, daas: _daas, audioUrl, onReset, loggedIn, storyId, onSave }: {
   story: string;
   seed: Seed;
   daas: DaasResponse;
   audioUrl: string;
   onReset: () => void;
+  loggedIn?: boolean;
+  storyId?: string;
+  onSave?: () => Promise<void>;
 }) {
+  const router = useRouter();
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [toast, setToast] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const ambientRef = useRef<HTMLAudioElement | null>(null);
@@ -162,6 +170,35 @@ export default function PlaybackScreen({ story, seed, daas, audioUrl, onReset }:
     };
   }, [audioUrl]);
 
+  function signinRedirect() {
+    const returnUrl = storyId ? `/play/${storyId}` : "/";
+    router.push(`/signin?return=${encodeURIComponent(returnUrl)}`);
+  }
+
+  async function handleSave() {
+    if (!loggedIn) { signinRedirect(); return; }
+    setSaving(true);
+    try {
+      if (onSave) await onSave();
+      setSaved(true);
+      setToast("Story saved to your library");
+      setTimeout(() => setToast(null), 2500);
+    } catch {
+      setToast("Save failed — please try again");
+      setTimeout(() => setToast(null), 2500);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleShare() {
+    if (!loggedIn) { signinRedirect(); return; }
+    const url = `${window.location.origin}/play/${storyId}`;
+    await navigator.clipboard.writeText(url);
+    setToast("Link copied");
+    setTimeout(() => setToast(null), 2000);
+  }
+
   const togglePlay = () => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -256,30 +293,55 @@ export default function PlaybackScreen({ story, seed, daas, audioUrl, onReset }:
         padding: "36px 24px 160px",
       }}>
 
-        {/* Top bar */}
+        {/* Top bar + profile button */}
         <div className="sipur-fadeup-1" style={{
           width: "100%", maxWidth: 420,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          position: "relative",
+          display: "flex", flexDirection: "column", gap: 14,
         }}>
-          <button
-            className="sipur-back-btn"
-            onClick={() => { ambientRef.current?.pause(); audioRef.current?.pause(); onReset(); }}
-            style={{
-              position: "absolute", left: 0,
-              width: 32, height: 32, borderRadius: "50%",
-              border: "1px solid rgba(245,238,216,0.15)",
-              background: "rgba(245,238,216,0.05)",
-              color: "rgba(245,238,216,0.4)", fontSize: 14,
-              cursor: "pointer", display: "flex", alignItems: "center",
-              justifyContent: "center", transition: "all 0.2s",
-            }}
-          >←</button>
+          {/* Logo row */}
           <div style={{
-            fontFamily: "'Cormorant Garamond', Georgia, serif",
-            fontWeight: 300, fontSize: 18, letterSpacing: "0.18em",
-            color: "rgba(245,238,216,0.5)", textTransform: "uppercase",
-          }}>סיפור</div>
+            display: "flex", alignItems: "center", justifyContent: "center",
+            position: "relative",
+          }}>
+            <button
+              className="sipur-back-btn"
+              onClick={() => { ambientRef.current?.pause(); audioRef.current?.pause(); onReset(); }}
+              style={{
+                position: "absolute", left: 0,
+                width: 32, height: 32, borderRadius: "50%",
+                border: "1px solid rgba(245,238,216,0.15)",
+                background: "rgba(245,238,216,0.05)",
+                color: "rgba(245,238,216,0.4)", fontSize: 14,
+                cursor: "pointer", display: "flex", alignItems: "center",
+                justifyContent: "center", transition: "all 0.2s",
+              }}
+            >←</button>
+            <div style={{
+              fontFamily: "'Cormorant Garamond', Georgia, serif",
+              fontWeight: 300, fontSize: 18, letterSpacing: "0.18em",
+              color: "rgba(245,238,216,0.5)", textTransform: "uppercase",
+            }}>סיפור</div>
+          </div>
+
+          {/* Profile button — inline below logo, left-aligned */}
+          {loggedIn && (
+            <button
+              onClick={() => router.push("/profile")}
+              style={{
+                alignSelf: "flex-start",
+                width: 32, height: 32, borderRadius: "50%",
+                border: "1px solid rgba(245,238,216,0.15)",
+                background: "rgba(245,238,216,0.05)",
+                color: "rgba(245,238,216,0.4)",
+                cursor: "pointer", display: "flex", alignItems: "center",
+                justifyContent: "center", transition: "all 0.2s",
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+              </svg>
+            </button>
+          )}
         </div>
 
         {/* Story meta */}
@@ -400,7 +462,7 @@ export default function PlaybackScreen({ story, seed, daas, audioUrl, onReset }:
           </div>
 
           {/* Buttons */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 32 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 32, position: "relative" }}>
 
             <button className="sipur-ctrl-btn" onClick={() => skip(-15)} style={{
               background: "none", border: "none", cursor: "pointer",
@@ -455,6 +517,64 @@ export default function PlaybackScreen({ story, seed, daas, audioUrl, onReset }:
               </svg>
             </button>
           </div>
+
+          {/* Save + Share */}
+          <div style={{ display: "flex", justifyContent: "center", gap: 16, marginTop: 22 }}>
+              <button
+                onClick={handleSave}
+                disabled={saving || saved}
+                style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  background: "none", border: "1px solid rgba(245,238,216,0.1)",
+                  borderRadius: 20, padding: "6px 16px", cursor: saving || saved ? "default" : "pointer",
+                  color: saved ? "rgba(100,180,120,0.6)" : "rgba(245,238,216,0.35)",
+                  fontFamily: "'Cormorant Garamond', Georgia, serif",
+                  fontSize: 13, letterSpacing: "0.1em",
+                  transition: "all 0.2s", opacity: saving ? 0.5 : 1,
+                }}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 3v13M6 11l6 6 6-6"/><path d="M5 21h14"/>
+                </svg>
+                {saving ? "Saving…" : saved ? "Saved ✓" : "Save"}
+              </button>
+
+              {storyId && (
+                <button
+                  onClick={handleShare}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    background: "none", border: "1px solid rgba(245,238,216,0.1)",
+                    borderRadius: 20, padding: "6px 16px", cursor: "pointer",
+                    color: "rgba(245,238,216,0.35)",
+                    fontFamily: "'Cormorant Garamond', Georgia, serif",
+                    fontSize: 13, letterSpacing: "0.1em",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                    <path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/>
+                  </svg>
+                  Share
+                </button>
+              )}
+            </div>
+
+          {/* Toast */}
+          {toast && (
+            <div style={{
+              position: "absolute", bottom: "calc(100% + 12px)", left: "50%",
+              transform: "translateX(-50%)",
+              background: "rgba(20,16,40,0.95)", border: "1px solid rgba(245,238,216,0.12)",
+              borderRadius: 20, padding: "7px 18px",
+              color: "rgba(245,238,216,0.7)",
+              fontFamily: "'Cormorant Garamond', Georgia, serif",
+              fontSize: 13, letterSpacing: "0.1em",
+              whiteSpace: "nowrap", pointerEvents: "none",
+              animation: "sipurFadeUp 0.2s ease",
+            }}>{toast}</div>
+          )}
         </div>
       </div>
     </div>

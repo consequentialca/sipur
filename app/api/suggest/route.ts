@@ -15,7 +15,7 @@ Return JSON: { "value": "..." }`,
   lesson: `Suggest a single relatable life lesson theme for children, expressed as a short phrase (3–6 words, lowercase).
 Return JSON: { "value": "..." }`,
 
-  character: `Invent one child character for a bedtime story — a culturally diverse, universally relatable first name and a realistic age between 3 and 10. No bias toward any culture or religion. The name should be warm and easy to pronounce aloud.
+  character: `Invent one child character for a bedtime story. Choose a first name and a realistic age between 3 and 10. The name must feel like a real name a real parent gave their child — not a whimsical AI invention. Draw from the full global spectrum: Hebrew, Arabic, Slavic, East Asian, West African, South Asian, Latin American, Scandinavian, English, etc. Avoid overused AI defaults like Milo, Lumi, Zara, Kai, Luna, or Aria. Pick something specific and unexpected. The name should be easy to pronounce aloud.
 Return JSON: { "value": { "name": "...", "age": ... } }`,
 };
 

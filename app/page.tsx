@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { AppState, Seed, DaasResponse, UserProfile } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
 import ComposeScreen from "@/components/ComposeScreen";
@@ -29,6 +30,7 @@ const initialState: AppState = {
 };
 
 export default function Home() {
+  const router = useRouter();
   const [state, setState] = useState<AppState>(initialState);
 
   // Auth state
@@ -167,26 +169,6 @@ export default function Home() {
       if (!profile) {
         // Anonymous: increment counter
         localStorage.setItem(ANON_KEY, String(getAnonCount() + 1));
-      } else {
-        // Logged in: persist story + increment (non-blocking)
-        void (async () => {
-          try {
-            await supabase.from("stories").insert({
-              user_id: profile.id,
-              seed: capturedSeed,
-              daas_output: capturedDaas,
-              story_text: story,
-              audio_url: null,
-            });
-            await supabase.rpc("increment_stories_generated", { uid: profile.id });
-          } catch (err) {
-            console.error(err);
-          }
-        })();
-
-        setProfile((p) =>
-          p ? { ...p, stories_generated: p.stories_generated + 1 } : p
-        );
       }
     } catch {
       setState((s) => ({
@@ -195,6 +177,47 @@ export default function Home() {
         error: "Something went wrong. Please try again.",
       }));
     }
+  }
+
+  // ── Explicit save (triggered by Save button in PlaybackScreen) ──
+  async function handleSaveStory() {
+    if (!profile || !state.story || !state.seed || !state.daas || !state.audioUrl) return;
+
+    const blob = await fetch(state.audioUrl).then((r) => r.blob());
+
+    const { data: inserted, error: insertErr } = await supabase
+      .from("stories")
+      .insert({
+        user_id: profile.id,
+        seed: state.seed,
+        daas_output: state.daas,
+        story_text: state.story,
+        audio_url: null,
+      })
+      .select("id")
+      .single();
+    if (insertErr) throw insertErr;
+
+    const savedStoryId = inserted?.id;
+    if (savedStoryId) {
+      const storagePath = `${profile.id}/${savedStoryId}.mp3`;
+      const { error: uploadErr } = await supabase.storage
+        .from("stories")
+        .upload(storagePath, blob, { contentType: "audio/mpeg", upsert: true });
+
+      if (!uploadErr) {
+        const { data: { publicUrl } } = supabase.storage
+          .from("stories")
+          .getPublicUrl(storagePath);
+        await supabase
+          .from("stories")
+          .update({ audio_url: publicUrl })
+          .eq("id", savedStoryId);
+      }
+    }
+
+    await supabase.rpc("increment_stories_generated", { uid: profile.id });
+    setProfile((p) => p ? { ...p, stories_generated: p.stories_generated + 1 } : p);
   }
 
   // ── Start over ────────────────────────────────────────────
@@ -266,6 +289,27 @@ export default function Home() {
             >
               your story told
             </div>
+
+            {/* Profile button — inline below tagline, left-aligned */}
+            {profile && state.stage === "compose" && (
+              <div style={{ display: "flex", justifyContent: "flex-start", marginTop: 20 }}>
+                <button
+                  onClick={() => router.push("/profile")}
+                  style={{
+                    width: 32, height: 32, borderRadius: "50%",
+                    border: "1px solid rgba(245,230,200,0.15)",
+                    background: "rgba(245,230,200,0.05)",
+                    color: "rgba(245,230,200,0.4)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    cursor: "pointer", transition: "all 0.2s",
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                    <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+                  </svg>
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Error banner */}
@@ -405,6 +449,8 @@ export default function Home() {
           daas={state.daas}
           audioUrl={state.audioUrl}
           onReset={handleReset}
+          loggedIn={!!profile}
+          onSave={profile ? handleSaveStory : undefined}
         />
       )}
     </>

@@ -388,51 +388,55 @@ export default function ComposeScreen({ initialSeed, loading, onConfirm }: {
 
           <span style={{ fontStyle: "italic", opacity: 0.45 }}>A</span>
 
-          {/* TONE */}
-          <div style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 4 }}
+          {/* TONE + DURATION — grouped so they wrap together cleanly */}
+          <div style={{ display: "inline-flex", flexWrap: "wrap", alignItems: "center", gap: "5px 5px" }}
             onClick={(e) => e.stopPropagation()}>
-            {tones.length === 0 ? (
-              <>
-                <Chip color="gold" label="tone" value={null} onTap={() => setOpenSelector("tone")} />
-                <SparkButton color="#d4af37" loading={!!chipLoading.tone} onClick={() => generateChip("tone")} />
-              </>
-            ) : (
-              <>
-                {tones.map((t, i) => (
-                  <span key={t} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-                    {i > 0 && <span style={{ opacity: 0.25, fontSize: 13 }}>+</span>}
-                    <Chip color="gold" label="tone" value={t}
-                      onTap={() => setOpenSelector("tone")}
-                      onClear={() => setTones((p) => p.filter((x) => x !== t))} />
-                  </span>
-                ))}
-                {tones.length < 2 && <PlusButton onClick={() => setOpenSelector("tone")} />}
-                <SparkButton color="#d4af37" loading={!!chipLoading.tone}
-                  onClick={() => { setTones([]); generateChip("tone"); }} />
-              </>
-            )}
-            {openSelector === "tone" && (
-              <Selector options={TONES.filter((t) => !tones.includes(t))} color="gold"
-                onSelect={(t) => setTones((p) => [...p, t])} onClose={closeAll} />
-            )}
-          </div>
 
-          <span style={{ fontStyle: "italic", opacity: 0.45 }}>,</span>
+            {/* TONE */}
+            <div style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 4 }}>
+              {tones.length === 0 ? (
+                <>
+                  <Chip color="gold" label="tone" value={null} onTap={() => setOpenSelector("tone")} />
+                  <SparkButton color="#d4af37" loading={!!chipLoading.tone} onClick={() => generateChip("tone")} />
+                </>
+              ) : (
+                <>
+                  {tones.map((t, i) => (
+                    <span key={t} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                      {i > 0 && <span style={{ opacity: 0.25, fontSize: 13 }}>+</span>}
+                      <Chip color="gold" label="tone" value={t}
+                        onTap={() => setOpenSelector("tone")}
+                        onClear={() => setTones((p) => p.filter((x) => x !== t))} />
+                    </span>
+                  ))}
+                  {tones.length < 2 && <PlusButton onClick={() => setOpenSelector("tone")} />}
+                  <SparkButton color="#d4af37" loading={!!chipLoading.tone}
+                    onClick={() => { setTones([]); generateChip("tone"); }} />
+                </>
+              )}
+              {openSelector === "tone" && (
+                <Selector options={TONES.filter((t) => !tones.includes(t))} color="gold"
+                  onSelect={(t) => setTones((p) => [...p, t])} onClose={closeAll} />
+              )}
+            </div>
 
-          {/* DURATION */}
-          <div style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 4 }}
-            onClick={(e) => e.stopPropagation()}>
-            <Chip color="coral" label="duration" value={duration}
-              onTap={() => setOpenSelector("duration")}
-              onClear={duration ? () => setDuration(null) : undefined} />
-            {openSelector === "duration" && (
-              <Selector
-                options={["3 min", "5 min", "10 min"]}
-                color="coral"
-                onSelect={(d) => setDuration(d as StoryDuration)}
-                onClose={closeAll}
-              />
-            )}
+            <span style={{ fontStyle: "italic", opacity: 0.45 }}>,</span>
+
+            {/* DURATION */}
+            <div style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 4 }}>
+              <Chip color="coral" label="duration" value={duration}
+                onTap={() => setOpenSelector("duration")}
+                onClear={duration ? () => setDuration(null) : undefined} />
+              {openSelector === "duration" && (
+                <Selector
+                  options={["3 min", "5 min", "10 min"]}
+                  color="coral"
+                  onSelect={(d) => setDuration(d as StoryDuration)}
+                  onClose={closeAll}
+                />
+              )}
+            </div>
+
           </div>
 
           <span style={{ fontStyle: "italic", opacity: 0.45 }}>story about</span>
