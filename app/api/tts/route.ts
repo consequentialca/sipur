@@ -36,7 +36,7 @@ function splitIntoChunks(text: string): string[] {
 
 export async function POST(req: NextRequest) {
   try {
-    const { story } = (await req.json()) as { story: string };
+    const { story, voice } = (await req.json()) as { story: string; voice?: string };
 
     if (!story?.trim()) {
       return NextResponse.json({ error: "story text required" }, { status: 400 });
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
       const chunk = isLast ? `... ${chunks[ci]}` : chunks[ci];
       const response = await client.audio.speech.create({
         model: "tts-1-hd",
-        voice: "sage",
+        voice: (["sage","nova","coral","alloy"].includes(voice ?? "") ? voice : "sage") as "sage" | "nova" | "coral" | "alloy",
         input: chunk,
         speed: 0.9,
         response_format: "mp3",

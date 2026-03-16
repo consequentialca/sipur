@@ -16,6 +16,7 @@ export interface Seed {
   lesson_source: "list_selected" | "freeform" | "generated";
   family_terms: string[];
   duration: StoryDuration;
+  voice?: string;
 }
 
 // ─── Daas Response Contract (frozen) ─────────────────────────

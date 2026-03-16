@@ -21,7 +21,15 @@ const CHIP_COLORS = {
   green:  { bg: "rgba(100,180,120,0.15)", border: "rgba(100,180,120,0.45)", text: "#64b478", glow: "rgba(100,180,120,0.25)", hex: "#64b478" },
   purple: { bg: "rgba(180,120,220,0.15)", border: "rgba(180,120,220,0.45)", text: "#b478dc", glow: "rgba(180,120,220,0.25)", hex: "#b478dc" },
   coral:  { bg: "rgba(210,100,80,0.15)",  border: "rgba(210,100,80,0.45)",  text: "#d26450", glow: "rgba(210,100,80,0.25)", hex: "#d26450" },
+  silver: { bg: "rgba(180,190,205,0.15)", border: "rgba(180,190,205,0.45)", text: "#b0bec8", glow: "rgba(180,190,205,0.25)", hex: "#b0bec8" },
 };
+
+const VOICES = [
+  { id: "sage",  label: "The Dreamer" },
+  { id: "nova",  label: "The Sage" },
+  { id: "coral", label: "The Storyteller" },
+  { id: "alloy", label: "The Guardian" },
+];
 
 type ColorKey = keyof typeof CHIP_COLORS;
 
@@ -174,6 +182,42 @@ function Selector({ options, color, onSelect, onClose, allowFreeform }: {
   );
 }
 
+function VoicePopover({ selected, onSelect, onClose }: {
+  selected: string; onSelect: (id: string) => void; onClose: () => void;
+}) {
+  return (
+    <div
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        position: "absolute", top: "calc(100% + 8px)", left: "50%",
+        transform: "translateX(-50%)",
+        background: "rgba(10,8,16,0.98)", border: "1px solid rgba(245,230,200,0.1)",
+        borderRadius: 14, padding: "8px",
+        display: "flex", flexDirection: "column", gap: 4,
+        minWidth: 190, zIndex: 100,
+        boxShadow: "0 20px 60px rgba(0,0,0,0.7)",
+        animation: "fadeUp 0.16s ease",
+      }}
+    >
+      {VOICES.map(({ id, label }) => (
+        <span
+          key={id}
+          onClick={() => { onSelect(id); onClose(); }}
+          style={{
+            padding: "7px 14px", borderRadius: 10, cursor: "pointer",
+            background: selected === id ? "rgba(180,190,205,0.12)" : "transparent",
+            border: selected === id ? "1px solid rgba(180,190,205,0.3)" : "1px solid transparent",
+            color: selected === id ? "#b0bec8" : "rgba(245,230,200,0.4)",
+            fontFamily: "'Cormorant Garamond', Georgia, serif",
+            fontSize: 15, fontWeight: selected === id ? 600 : 400,
+            transition: "all 0.15s",
+          }}
+        >{label}</span>
+      ))}
+    </div>
+  );
+}
+
 function AddChildPopover({ onAdd, onClose }: {
   onAdd: (c: Character) => void; onClose: () => void;
 }) {
@@ -293,6 +337,7 @@ export default function ComposeScreen({ initialSeed, loading, onConfirm }: {
   const [plot, setPlot] = useState(initialSeed?.plot ?? "");
   const [lesson, setLesson] = useState(initialSeed?.lesson_label ?? "");
   const [duration, setDuration] = useState<StoryDuration | null>(initialSeed?.duration ?? null);
+  const [voice, setVoice] = useState<string | null>(initialSeed?.voice ?? null);
   const [openSelector, setOpenSelector] = useState<string | null>(null);
   const [chipLoading, setChipLoading] = useState<Record<string, boolean>>({});
 
@@ -347,9 +392,11 @@ export default function ComposeScreen({ initialSeed, loading, onConfirm }: {
     if (loading) return;
     if (isReady) {
       // Build raw seed sentence
+      const selectedVoice = voice ?? "sage";
+      const voiceLabel = VOICES.find((v) => v.id === selectedVoice)?.label ?? "The Dreamer";
       const raw = `A ${tones.join(" + ")} story about ${
         characters.map((c) => `${c.name} (${c.age})`).join(" + ")
-      }, who ${plot}, teaching a lesson about ${lesson}.`;
+      }, who ${plot}, told by ${voiceLabel}, teaching a lesson about ${lesson}.`;
 
       onConfirm({
         raw,
@@ -360,6 +407,7 @@ export default function ComposeScreen({ initialSeed, loading, onConfirm }: {
         lesson_source: "list_selected",
         family_terms: [],
         duration: duration ?? "5 min",
+        voice: selectedVoice,
       });
       return;
     }
@@ -369,6 +417,7 @@ export default function ComposeScreen({ initialSeed, loading, onConfirm }: {
     if (!plot.trim())            generateChip("plot");
     if (!lesson.trim())          generateChip("lesson");
     if (!duration)               setDuration("5 min");
+    if (!voice)                  setVoice(VOICES[Math.floor(Math.random() * VOICES.length)].id);
   };
 
   return (
@@ -463,7 +512,7 @@ export default function ComposeScreen({ initialSeed, loading, onConfirm }: {
           <span style={{ fontStyle: "italic", opacity: 0.45 }}>, who</span>
 
           {/* PLOT */}
-          <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 4, width: "100%" }}
+          <div style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 4, width: openSelector === "plot" ? "100%" : undefined }}
             onClick={(e) => e.stopPropagation()}>
             {openSelector === "plot" ? (
               <textarea
@@ -489,6 +538,22 @@ export default function ComposeScreen({ initialSeed, loading, onConfirm }: {
               onClick={() => { closeAll(); generateChip("plot"); }} />
           </div>
 
+          <span style={{ fontStyle: "italic", opacity: 0.45 }}>, told by</span>
+
+          {/* VOICE */}
+          <div style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 4 }}
+            onClick={(e) => e.stopPropagation()}>
+            <Chip
+              color="silver"
+              label="voice"
+              value={voice ? (VOICES.find((v) => v.id === voice)?.label ?? null) : null}
+              onTap={() => setOpenSelector("voice")}
+            />
+            {openSelector === "voice" && (
+              <VoicePopover selected={voice ?? ""} onSelect={setVoice} onClose={closeAll} />
+            )}
+          </div>
+
           <span style={{ fontStyle: "italic", opacity: 0.45 }}>, teaching a lesson about</span>
 
           {/* LESSON */}
@@ -511,7 +576,7 @@ export default function ComposeScreen({ initialSeed, loading, onConfirm }: {
 
       {/* Legend */}
       <div style={{ display: "flex", gap: 18, justifyContent: "center", marginBottom: 28, flexWrap: "wrap" }}>
-        {[["#d4af37","Tone"],["#d26450","Duration"],["#64a0dc","Names"],["#64b478","Plot"],["#b478dc","Lesson"]].map(([color, label]) => (
+        {[["#d4af37","Tone"],["#d26450","Duration"],["#64a0dc","Names"],["#64b478","Plot"],["#b0bec8","Voice"],["#b478dc","Lesson"]].map(([color, label]) => (
           <div key={label} style={{ display: "flex", alignItems: "center", gap: 5 }}>
             <div style={{ width: 5, height: 5, borderRadius: "50%", background: color, boxShadow: `0 0 5px ${color}` }} />
             <span style={{ fontSize: 10, letterSpacing: "0.22em", color: "rgba(245,230,200,0.25)", textTransform: "uppercase" }}>{label}</span>
