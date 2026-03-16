@@ -140,7 +140,7 @@ export default function PlaybackScreen({ story, seed, daas: _daas, audioUrl, onR
       } else {
         ambientRef.current.volume = next;
       }
-    }, 2000 / steps);
+    }, 5000 / steps);
   };
 
   // Set up narration audio from pre-fetched URL + auto-play on mount

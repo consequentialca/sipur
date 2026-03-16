@@ -81,14 +81,6 @@ export default function Home() {
     setShowSignupPrompt(false);
   }
 
-  async function handleSignOut() {
-    await supabase.auth.signOut();
-    setProfile(null);
-    setShowUpgrade(false);
-    setShowSignupPrompt(false);
-    setState(initialState);
-  }
-
   // ── Stage 1: seed confirmed → call Daas ──────────────────
   async function handleSeedConfirmed(seed: Seed) {
     setState((s) => ({ ...s, stage: "classifying", seed, error: null }));
@@ -409,24 +401,6 @@ export default function Home() {
             className="mt-14 text-center"
             style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}
           >
-            {profile && (
-              <button
-                onClick={handleSignOut}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "rgba(245,230,200,0.2)",
-                  fontFamily: "'Cormorant Garamond', Georgia, serif",
-                  fontSize: 11,
-                  letterSpacing: "0.18em",
-                  cursor: "pointer",
-                  fontStyle: "italic",
-                  padding: 0,
-                }}
-              >
-                Sign out · {profile.email}
-              </button>
-            )}
             <div
               style={{
                 fontSize: 10,

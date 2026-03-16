@@ -45,9 +45,11 @@ export async function POST(req: NextRequest) {
     const chunks = splitIntoChunks(story);
     const buffers: Buffer[] = [];
 
-    for (const chunk of chunks) {
+    for (let ci = 0; ci < chunks.length; ci++) {
+      const isLast = ci === chunks.length - 1;
+      const chunk = isLast ? `... ${chunks[ci]}` : chunks[ci];
       const response = await client.audio.speech.create({
-        model: "tts-1",
+        model: "tts-1-hd",
         voice: "sage",
         input: chunk,
         speed: 0.9,

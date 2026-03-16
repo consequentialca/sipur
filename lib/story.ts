@@ -62,9 +62,7 @@ The exact phrasing should feel native to this particular story's world and tone.
 Never repeat the same opener across stories. Never be formulaic.
 
 CLOSING
-End with a single soft, reflective sentence — not a moral declaration, but a gentle
-observation or image that carries the lesson quietly into sleep. It should feel like
-a hand resting on a shoulder, not a finger wagging at the reader.
+The final paragraph must slow the pace deliberately — use longer, flowing sentences that invite the listener to settle. Use sensory, grounding words like safe, warm, still, quiet, close, soft, or dreaming. The character should come to physical rest — lying down, eyes closing, breathing slowing. The very last sentence should be the quietest thing in the story, a single gentle image or observation that dissolves into sleep. Never end with a declaration or moral summary — end with a feeling.
   `.trim();
 }
 
