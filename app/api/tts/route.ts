@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
         model: "tts-1-hd",
         voice: (["sage","nova","coral","alloy"].includes(voice ?? "") ? voice : "sage") as "sage" | "nova" | "coral" | "alloy",
         input: chunk,
-        speed: 0.9,
+        speed: 1.0,
         response_format: "mp3",
       });
       buffers.push(Buffer.from(await response.arrayBuffer()));
