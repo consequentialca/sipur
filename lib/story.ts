@@ -62,7 +62,7 @@ The exact phrasing should feel native to this particular story's world and tone.
 Never repeat the same opener across stories. Never be formulaic.
 
 CLOSING
-The final paragraph must slow the pace deliberately — use longer, flowing sentences that invite the listener to settle. Use sensory grounding words like safe, warm, still, quiet, close, soft, or dreaming. The character should come to physical rest — lying down, eyes closing, breathing slowing. The very last sentence should be the quietest thing in the story, a single gentle image or observation that dissolves into sleep. Never end with a declaration or moral summary — end with a feeling.
+The story must reach a clear, warm resolution — the central tension is fully resolved before the final paragraph begins. The final paragraph must slow the pace deliberately — use longer, flowing sentences that invite the listener to settle. Use sensory grounding words like safe, warm, still, quiet, close, soft, or dreaming. The character should come to physical rest — lying down, eyes closing, breathing slowing. The lesson should surface naturally through what the character feels, chooses, or understands in this final moment — never stated directly, always felt. Weave it into the resolution itself, not after it. The very last sentence should be the quietest thing in the story, a single gentle image or observation that carries the lesson into sleep without naming it. Never end with a declaration or moral summary — end with a feeling.
   `.trim();
 }
 
