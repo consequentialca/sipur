@@ -149,7 +149,7 @@ export default function Home() {
       const ttsRes = await fetch("/api/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ story, voice: capturedSeed.voice }),
+        body: JSON.stringify({ story, voice: capturedSeed.voice, seed: capturedSeed, userId: profile?.id }),
       });
 
       if (!ttsRes.ok) throw new Error("TTS generation failed");

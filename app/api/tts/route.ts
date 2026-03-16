@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 // POST /api/tts
 // Converts story text to speech via OpenAI TTS.
 // Splits text at sentence boundaries to stay under the 4096-char API limit.
-// Body: { story: string }
+// Body: { story: string, voice?: string, seed?: object, userId?: string }
 // Returns: audio/mpeg binary stream
 
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -36,7 +37,12 @@ function splitIntoChunks(text: string): string[] {
 
 export async function POST(req: NextRequest) {
   try {
-    const { story, voice } = (await req.json()) as { story: string; voice?: string };
+    const { story, voice, seed, userId } = (await req.json()) as {
+      story: string;
+      voice?: string;
+      seed?: Record<string, unknown>;
+      userId?: string;
+    };
 
     if (!story?.trim()) {
       return NextResponse.json({ error: "story text required" }, { status: 400 });
@@ -59,6 +65,19 @@ export async function POST(req: NextRequest) {
     }
 
     const combined = Buffer.concat(buffers);
+
+    // Log story generation event (fire-and-forget, never blocks the response)
+    if (seed) {
+      try {
+        const db = getSupabaseAdmin();
+        await db.from("story_events").insert({
+          user_id: userId ?? null,
+          seed,
+        });
+      } catch (e) {
+        console.error("[/api/tts] failed to log story_event:", e);
+      }
+    }
 
     return new NextResponse(combined, {
       status: 200,

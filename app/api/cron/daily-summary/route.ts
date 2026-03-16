@@ -28,19 +28,21 @@ export async function GET(req: NextRequest) {
     .from("users")
     .select("*", { count: "exact", head: true });
 
-  // Stories in last 24h
+  // Stories generated in last 24h (all users incl. anonymous, from story_events)
   const { data: recentStories } = await supabaseAdmin
-    .from("stories")
+    .from("story_events")
     .select("seed, user_id, created_at")
     .gte("created_at", sinceIso);
 
-  // Total stories all time
+  // Total stories generated all time
   const { count: totalStories } = await supabaseAdmin
-    .from("stories")
+    .from("story_events")
     .select("*", { count: "exact", head: true });
 
   const stories = recentStories ?? [];
   const todayCount = stories.length;
+  const anonCount = stories.filter((r) => !r.user_id).length;
+  const loggedInCount = todayCount - anonCount;
 
   // Breakdowns
   const voiceCounts: Record<string, number> = {};
@@ -112,9 +114,9 @@ export async function GET(req: NextRequest) {
 
     <table>
       <tr><td>New users today</td><td>${newUsers ?? 0}</td></tr>
-      <tr><td>Stories generated today</td><td>${todayCount}</td></tr>
+      <tr><td>Stories generated today</td><td>${todayCount} &nbsp;<span style="font-weight:normal;font-size:12px;color:rgba(245,230,200,0.4)">(${loggedInCount} logged-in · ${anonCount} anonymous)</span></td></tr>
       <tr><td>Total registered users</td><td>${totalUsers ?? 0}</td></tr>
-      <tr><td>Total stories (all time)</td><td>${totalStories ?? 0}</td></tr>
+      <tr><td>Total stories generated (all time)</td><td>${totalStories ?? 0}</td></tr>
     </table>
 
     ${todayCount > 0 ? `
@@ -128,7 +130,7 @@ export async function GET(req: NextRequest) {
     </div>
     ` : ""}
 
-    <p class="note">Anonymous stories are not stored in the database and are excluded from these counts.</p>
+    <p class="note">Story counts include all generations (anonymous + logged-in) logged since this feature was deployed.</p>
   </div>
 </body>
 </html>
