@@ -17,27 +17,44 @@ export async function GET(req: NextRequest) {
   const since = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const sinceIso = since.toISOString();
 
-  // New users in last 24h
+  // Get internal user IDs to exclude from all metrics
+  const { data: internalUsers } = await supabaseAdmin
+    .from("users")
+    .select("id")
+    .ilike("email", "%@rreichmann.com");
+  const excludedIds = (internalUsers ?? []).map((u) => u.id);
+
+  // New users in last 24h (excluding internal)
   const { count: newUsers } = await supabaseAdmin
     .from("users")
     .select("*", { count: "exact", head: true })
-    .gte("created_at", sinceIso);
+    .gte("created_at", sinceIso)
+    .not("email", "ilike", "%@rreichmann.com");
 
-  // Total registered users
+  // Total registered users (excluding internal)
   const { count: totalUsers } = await supabaseAdmin
     .from("users")
-    .select("*", { count: "exact", head: true });
+    .select("*", { count: "exact", head: true })
+    .not("email", "ilike", "%@rreichmann.com");
 
-  // Stories generated in last 24h (all users incl. anonymous, from story_events)
-  const { data: recentStories } = await supabaseAdmin
+  // Stories generated in last 24h — exclude logged-in internal users; keep anon
+  let recentStoriesQuery = supabaseAdmin
     .from("story_events")
     .select("seed, user_id, created_at")
     .gte("created_at", sinceIso);
+  if (excludedIds.length > 0) {
+    recentStoriesQuery = recentStoriesQuery.not("user_id", "in", `(${excludedIds.join(",")})`);
+  }
+  const { data: recentStories } = await recentStoriesQuery;
 
-  // Total stories generated all time
-  const { count: totalStories } = await supabaseAdmin
+  // Total stories generated all time (excluding internal)
+  let totalStoriesQuery = supabaseAdmin
     .from("story_events")
     .select("*", { count: "exact", head: true });
+  if (excludedIds.length > 0) {
+    totalStoriesQuery = totalStoriesQuery.not("user_id", "in", `(${excludedIds.join(",")})`);
+  }
+  const { count: totalStories } = await totalStoriesQuery;
 
   const stories = recentStories ?? [];
   const todayCount = stories.length;
