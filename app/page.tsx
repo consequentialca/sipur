@@ -387,11 +387,11 @@ export default function Home() {
               )}
 
               {state.stage === "generating" && state.daas && (
-                <GeneratingScreen daas={state.daas} />
+                <GeneratingScreen daas={state.daas} messages={["Your story will be ready in a minute or two", "Good stories take time"]} />
               )}
 
               {state.stage === "preparing" && state.daas && (
-                <GeneratingScreen daas={state.daas} label="Preparing the narration..." />
+                <GeneratingScreen daas={state.daas} label="Preparing the narration..." messages={["Your story will be ready momentarily", "Storytime is almost here"]} />
               )}
             </>
           )}

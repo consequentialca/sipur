@@ -1,12 +1,32 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { DaasResponse, Seed } from "@/lib/types";
 
 // ─── GeneratingScreen ─────────────────────────────────────────
 // Shown while Stage 2 (story generation) is in flight.
 // Displays the one_liner as a holding thought.
 
-export function GeneratingScreen({ daas, label }: { daas: DaasResponse; label?: string }) {
+export function GeneratingScreen({ daas, label, messages }: {
+  daas: DaasResponse;
+  label?: string;
+  messages?: string[];
+}) {
+  const [msgIndex, setMsgIndex] = useState(0);
+  const [msgVisible, setMsgVisible] = useState(true);
+
+  useEffect(() => {
+    if (!messages || messages.length < 2) return;
+    const id = setInterval(() => {
+      setMsgVisible(false);
+      setTimeout(() => {
+        setMsgIndex((i) => (i + 1) % messages.length);
+        setMsgVisible(true);
+      }, 600);
+    }, 4500);
+    return () => clearInterval(id);
+  }, [messages]);
+
   return (
     <div className="animate-fade-in" style={{ textAlign: "center", padding: "40px 0" }}>
 
@@ -61,6 +81,21 @@ export function GeneratingScreen({ daas, label }: { daas: DaasResponse; label?: 
           userSelect: "none",
         }}>✦</div>
       </div>
+
+      {/* Oscillating status messages — below orb */}
+      {messages && messages.length > 0 && (
+        <div style={{
+          marginTop: 28,
+          fontSize: 13, letterSpacing: "0.12em",
+          fontStyle: "italic", fontWeight: 300,
+          color: "rgba(212,175,55,0.5)",
+          textShadow: "0 0 10px rgba(212,175,55,0.3)",
+          opacity: msgVisible ? 1 : 0,
+          transition: "opacity 0.6s ease",
+        }}>
+          {messages[msgIndex]}
+        </div>
+      )}
     </div>
   );
 }
