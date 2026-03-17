@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logError } from "@/lib/log-error";
 
 // POST /api/suggest
 // Generates a single chip field value using Claude, given the current seed context.
@@ -71,6 +72,7 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("[/api/suggest]", err);
+    await logError("/api/suggest", err);
     return NextResponse.json({ error: "Suggestion failed", detail: msg }, { status: 500 });
   }
 }

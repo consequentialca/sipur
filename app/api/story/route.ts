@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateStory } from "@/lib/story";
 import { Seed, DaasResponse } from "@/lib/types";
+import { logError } from "@/lib/log-error";
 
 // POST /api/story
 // Stage 2 — Story generation.
@@ -25,6 +26,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ story });
   } catch (err) {
     console.error("[/api/story]", err);
+    await logError("/api/story", err);
     return NextResponse.json(
       { error: "Story generation failed" },
       { status: 500 }

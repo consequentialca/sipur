@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
+import { logError } from "@/lib/log-error";
 
 // POST /api/tts
 // Converts story text to speech via OpenAI TTS.
@@ -36,13 +37,16 @@ function splitIntoChunks(text: string): string[] {
 }
 
 export async function POST(req: NextRequest) {
+  let userId: string | undefined;
   try {
-    const { story, voice, seed, userId } = (await req.json()) as {
+    const body = (await req.json()) as {
       story: string;
       voice?: string;
       seed?: Record<string, unknown>;
       userId?: string;
     };
+    const { story, voice, seed } = body;
+    userId = body.userId;
 
     if (!story?.trim()) {
       return NextResponse.json({ error: "story text required" }, { status: 400 });
@@ -88,6 +92,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     console.error("[/api/tts]", err);
+    await logError("/api/tts", err, { userId });
     return NextResponse.json({ error: "TTS generation failed" }, { status: 500 });
   }
 }

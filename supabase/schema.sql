@@ -36,6 +36,28 @@ create or replace trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
+-- Error logs table
+create table public.error_logs (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  route text not null,
+  error_message text not null,
+  user_id uuid references public.users(id) on delete set null,
+  metadata jsonb
+);
+alter table public.error_logs enable row level security;
+-- Only service role accesses this table
+
+-- Story events table (all generations, incl. anonymous)
+create table public.story_events (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.users(id) on delete set null,
+  seed jsonb not null,
+  created_at timestamptz not null default now()
+);
+alter table public.story_events enable row level security;
+-- Only service role accesses this table; no user-facing policies needed
+
 -- RPC: atomic increment (race-condition safe)
 create or replace function public.increment_stories_generated(uid uuid)
 returns void as $$

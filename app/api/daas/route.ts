@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDaasClassification } from "@/lib/daas";
 import { Seed } from "@/lib/types";
+import { logError } from "@/lib/log-error";
 
 // POST /api/daas
 // Stage 1 — Daas classification.
@@ -20,6 +21,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(daas);
   } catch (err) {
     console.error("[/api/daas]", err);
+    await logError("/api/daas", err);
     return NextResponse.json(
       { error: "Daas classification failed" },
       { status: 500 }
