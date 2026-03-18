@@ -20,12 +20,22 @@ function getAnonCount(): number {
   return parseInt(localStorage.getItem(ANON_KEY) || "0", 10);
 }
 
+const AMBIENT_TRACKS = [
+  "/audio/ambient.mp3",
+  "/audio/ambient2.mp3",
+  "/audio/ambient%203.mp3",
+  "/audio/inspiring.mp3",
+  "/audio/inspiring2.mp3",
+  "/audio/relaxing.mp3",
+];
+
 const initialState: AppState = {
   stage: "compose",
   seed: null,
   daas: null,
   story: null,
   audioUrl: null,
+  ambientTrack: null,
   error: null,
 };
 
@@ -159,7 +169,8 @@ export default function Home() {
       const blob = await ttsRes.blob();
       const audioUrl = URL.createObjectURL(blob);
 
-      setState((s) => ({ ...s, stage: "playback", audioUrl }));
+      const ambientTrack = AMBIENT_TRACKS[Math.floor(Math.random() * AMBIENT_TRACKS.length)];
+      setState((s) => ({ ...s, stage: "playback", audioUrl, ambientTrack }));
 
       if (profile) {
         // Logged-in: increment DB counter and update local gate check
@@ -431,12 +442,13 @@ export default function Home() {
       </main>
 
       {/* PlaybackScreen rendered outside transform/opacity containers so position:fixed works */}
-      {state.stage === "playback" && state.story && state.seed && state.daas && state.audioUrl && (
+      {state.stage === "playback" && state.story && state.seed && state.daas && state.audioUrl && state.ambientTrack && (
         <PlaybackScreen
           story={state.story}
           seed={state.seed}
           daas={state.daas}
           audioUrl={state.audioUrl}
+          ambientTrack={state.ambientTrack}
           onReset={handleReset}
           loggedIn={!!profile}
           onSave={profile ? handleSaveStory : undefined}

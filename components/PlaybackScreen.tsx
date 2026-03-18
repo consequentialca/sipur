@@ -13,11 +13,12 @@ function fmt(secs: number): string {
 }
 
 
-export default function PlaybackScreen({ story, seed, daas: _daas, audioUrl, onReset, loggedIn, storyId, onSave }: {
+export default function PlaybackScreen({ story, seed, daas: _daas, audioUrl, ambientTrack, onReset, loggedIn, storyId, onSave }: {
   story: string;
   seed: Seed;
   daas: DaasResponse;
   audioUrl: string;
+  ambientTrack: string;
   onReset: () => void;
   loggedIn?: boolean;
   storyId?: string;
@@ -115,7 +116,7 @@ export default function PlaybackScreen({ story, seed, daas: _daas, audioUrl, onR
 
   // Ambient music
   useEffect(() => {
-    const ambient = new Audio("/audio/ambient.mp3");
+    const ambient = new Audio(ambientTrack);
     ambient.loop = true;
     ambient.volume = 0.15;
     ambientRef.current = ambient;

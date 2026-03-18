@@ -54,5 +54,6 @@ export interface AppState {
   daas: DaasResponse | null;
   story: string | null;
   audioUrl: string | null;
+  ambientTrack: string | null;
   error: string | null;
 }
