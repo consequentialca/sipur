@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Seed, DaasResponse } from "@/lib/types";
@@ -18,6 +18,17 @@ export default function PlayPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
+
+  const ambientTrack = useRef(
+    [
+      "/audio/ambient.mp3",
+      "/audio/ambient2.mp3",
+      "/audio/ambient%203.mp3",
+      "/audio/inspiring.mp3",
+      "/audio/inspiring2.mp3",
+      "/audio/relaxing.mp3",
+    ][Math.floor(Math.random() * 6)]
+  ).current;
 
   const [data, setData] = useState<StoryData | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -134,6 +145,7 @@ export default function PlayPage() {
       seed={data.seed}
       daas={data.daas_output}
       audioUrl={audioUrl}
+      ambientTrack={ambientTrack}
       onReset={() => router.push("/profile")}
       loggedIn
       storyId={id}
