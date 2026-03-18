@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("[/api/suggest]", err);
-    await logError("/api/suggest", err);
+    void logError("/api/suggest", err);
     return NextResponse.json({ error: "Suggestion failed", detail: msg }, { status: 500 });
   }
 }

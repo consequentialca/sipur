@@ -56,13 +56,11 @@ export async function POST(req: NextRequest) {
     const buffers: Buffer[] = [];
 
     for (let ci = 0; ci < chunks.length; ci++) {
-      const isLast = ci === chunks.length - 1;
-      const chunk = isLast ? `... ${chunks[ci]}` : chunks[ci];
       const response = await client.audio.speech.create({
         model: "tts-1-hd",
         voice: (["sage","nova","coral","alloy"].includes(voice ?? "") ? voice : "sage") as "sage" | "nova" | "coral" | "alloy",
-        input: chunk,
-        speed: 1.0,
+        input: chunks[ci],
+        speed: 0.9,
         response_format: "mp3",
       });
       buffers.push(Buffer.from(await response.arrayBuffer()));
@@ -92,7 +90,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     console.error("[/api/tts]", err);
-    await logError("/api/tts", err, { userId });
+    void logError("/api/tts", err, { userId });
     return NextResponse.json({ error: "TTS generation failed" }, { status: 500 });
   }
 }

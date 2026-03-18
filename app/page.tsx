@@ -38,6 +38,7 @@ export default function Home() {
   const [authLoading, setAuthLoading] = useState(true);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [showSignupPrompt, setShowSignupPrompt] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   // ── Auth setup ─────────────────────────────────────────────
   useEffect(() => {
@@ -92,15 +93,16 @@ export default function Home() {
         body: JSON.stringify({ seed }),
       });
 
-      if (!res.ok) throw new Error("Daas classification failed");
-      const daas: DaasResponse = await res.json();
+      const daasBody = await res.json();
+      if (!res.ok) throw new Error(`${daasBody.error ?? "Daas classification failed"} (Error ${res.status})`);
+      const daas: DaasResponse = daasBody;
 
       setState((s) => ({ ...s, stage: "confirm", daas }));
-    } catch {
+    } catch (err) {
       setState((s) => ({
         ...s,
         stage: "compose",
-        error: "Something went wrong classifying the story. Please try again.",
+        error: err instanceof Error ? err.message : "Something went wrong classifying the story. Please try again.",
       }));
     }
   }
@@ -120,8 +122,8 @@ export default function Home() {
       return;
     }
 
-    // Gate: free account at limit
-    if (profile && profile.stories_generated >= FREE_LIMIT) {
+    // Gate: free account at limit (bonus_stories extends the cap)
+    if (profile && profile.stories_generated >= FREE_LIMIT + profile.bonus_stories) {
       setShowUpgrade(true);
       return;
     }
@@ -140,8 +142,9 @@ export default function Home() {
         body: JSON.stringify({ seed: capturedSeed, daas: capturedDaas }),
       });
 
-      if (!storyRes.ok) throw new Error("Story generation failed");
-      const { story } = await storyRes.json();
+      const storyBody = await storyRes.json();
+      if (!storyRes.ok) throw new Error(`${storyBody.error ?? "Story generation failed"} (Error ${storyRes.status})`);
+      const { story } = storyBody;
 
       // Step 2: fetch TTS
       setState((s) => ({ ...s, stage: "preparing", story }));
@@ -152,21 +155,25 @@ export default function Home() {
         body: JSON.stringify({ story, voice: capturedSeed.voice, seed: capturedSeed, userId: profile?.id }),
       });
 
-      if (!ttsRes.ok) throw new Error("TTS generation failed");
+      if (!ttsRes.ok) throw new Error(`TTS generation failed (Error ${ttsRes.status})`);
       const blob = await ttsRes.blob();
       const audioUrl = URL.createObjectURL(blob);
 
       setState((s) => ({ ...s, stage: "playback", audioUrl }));
 
-      if (!profile) {
+      if (profile) {
+        // Logged-in: increment DB counter and update local gate check
+        void supabase.rpc("increment_stories_generated", { uid: profile.id });
+        setProfile((p) => p ? { ...p, stories_generated: p.stories_generated + 1 } : p);
+      } else {
         // Anonymous: increment counter
         localStorage.setItem(ANON_KEY, String(getAnonCount() + 1));
       }
-    } catch {
+    } catch (err) {
       setState((s) => ({
         ...s,
         stage: "confirm",
-        error: "Something went wrong. Please try again.",
+        error: err instanceof Error ? err.message : "Something went wrong. Please try again.",
       }));
     }
   }
@@ -175,6 +182,7 @@ export default function Home() {
   async function handleSaveStory() {
     if (!profile || !state.story || !state.seed || !state.daas || !state.audioUrl) return;
 
+    setSaving(true);
     const blob = await fetch(state.audioUrl).then((r) => r.blob());
 
     const { data: inserted, error: insertErr } = await supabase
@@ -208,12 +216,12 @@ export default function Home() {
       }
     }
 
-    await supabase.rpc("increment_stories_generated", { uid: profile.id });
-    setProfile((p) => p ? { ...p, stories_generated: p.stories_generated + 1 } : p);
+    setSaving(false);
   }
 
   // ── Start over ────────────────────────────────────────────
   function handleReset() {
+    if (saving) return; // don't reset while blob is being read for upload
     if (state.audioUrl) URL.revokeObjectURL(state.audioUrl);
 
     // Anonymous user hit limit → prompt signup instead
@@ -363,7 +371,14 @@ export default function Home() {
           )}
 
           {showUpgrade && !showSignupPrompt && (
-            <UpgradePrompt onBack={() => { setShowUpgrade(false); setState(initialState); }} />
+            <UpgradePrompt
+              onBack={() => { setShowUpgrade(false); setState(initialState); }}
+              userId={profile?.id}
+              onPromoApplied={(bonus) => {
+                setProfile((p) => p ? { ...p, bonus_stories: p.bonus_stories + bonus } : p);
+                setShowUpgrade(false);
+              }}
+            />
           )}
 
           {/* ── Main stage machine ── */}

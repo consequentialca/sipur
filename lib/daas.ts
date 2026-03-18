@@ -133,5 +133,14 @@ export async function getDaasClassification(seed: Seed): Promise<DaasResponse> {
     .replace(/```\s*$/i, "")
     .trim();
 
-  return JSON.parse(cleaned) as DaasResponse;
+  const parsed = JSON.parse(cleaned);
+  if (
+    typeof parsed.story_brief !== "string" ||
+    typeof parsed.one_liner !== "string" ||
+    !Array.isArray(parsed.guardrails) ||
+    typeof parsed.age_register !== "string"
+  ) {
+    throw new Error("Daas response missing required fields");
+  }
+  return parsed as DaasResponse;
 }

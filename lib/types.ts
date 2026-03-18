@@ -35,6 +35,7 @@ export interface UserProfile {
   id: string;
   email: string;
   stories_generated: number;
+  bonus_stories: number;
 }
 
 // ─── App State ────────────────────────────────────────────────

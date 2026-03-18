@@ -127,7 +127,7 @@ export async function GET(req: NextRequest) {
 <body>
   <div class="card">
     <h1>&#128202; Sipur Daily Summary</h1>
-    <div class="subtitle">${dateLabel} &middot; 6 pm EST</div>
+    <div class="subtitle">${dateLabel} &middot; 8 am EST</div>
 
     <table>
       <tr><td>New users today</td><td>${newUsers ?? 0}</td></tr>

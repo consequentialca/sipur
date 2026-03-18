@@ -21,7 +21,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(daas);
   } catch (err) {
     console.error("[/api/daas]", err);
-    await logError("/api/daas", err);
+    void logError("/api/daas", err);
+    const apiStatus = (err as { status?: number }).status;
+    if (apiStatus === 529 || apiStatus === 500) {
+      return NextResponse.json(
+        { error: "That story was so good it broke our machine — give us a moment and try again." },
+        { status: 503 }
+      );
+    }
     return NextResponse.json(
       { error: "Daas classification failed" },
       { status: 500 }

@@ -24,6 +24,10 @@ export default function ProfilePage() {
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [showPromoInput, setShowPromoInput] = useState(false);
+  const [promoCode, setPromoCode] = useState("");
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoMessage, setPromoMessage] = useState<{ text: string; ok: boolean } | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -64,6 +68,32 @@ export default function ProfilePage() {
     await supabase.storage.from("stories").remove([`${profile.id}/${id}.mp3`]);
     setStories((prev) => prev.filter((s) => s.id !== id));
     setConfirmDelete(null);
+  }
+
+  async function handlePromoSubmit() {
+    if (!promoCode.trim() || !profile) return;
+    setPromoLoading(true);
+    setPromoMessage(null);
+    try {
+      const res = await fetch("/api/redeem-promo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: promoCode.trim(), userId: profile.id }),
+      });
+      const body = await res.json();
+      if (!res.ok) {
+        setPromoMessage({ text: body.error ?? "Invalid promo code", ok: false });
+      } else {
+        const bonus = body.bonus_stories as number;
+        setPromoMessage({ text: `Code applied — ${bonus} bonus ${bonus === 1 ? "story" : "stories"} added.`, ok: true });
+        setProfile((p) => p ? { ...p, bonus_stories: p.bonus_stories + bonus } : p);
+        setPromoCode("");
+      }
+    } catch {
+      setPromoMessage({ text: "Something went wrong. Please try again.", ok: false });
+    } finally {
+      setPromoLoading(false);
+    }
   }
 
   function formatDate(dateStr: string): string {
@@ -387,7 +417,7 @@ export default function ProfilePage() {
       {/* ── Upgrade modal ── */}
       {showUpgrade && (
         <div
-          onClick={() => setShowUpgrade(false)}
+          onClick={() => { setShowUpgrade(false); setShowPromoInput(false); setPromoCode(""); setPromoMessage(null); }}
           style={{
             position: "fixed", inset: 0, zIndex: 100,
             background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)",
@@ -460,6 +490,72 @@ export default function ProfilePage() {
               <div style={{ fontSize: 14, color: "rgba(245,238,216,0.4)", letterSpacing: "0.02em" }}>
                 10 stories · no commitment
               </div>
+            </div>
+
+            {/* Promo code */}
+            <div style={{
+              borderTop: "1px solid rgba(255,255,255,0.06)",
+              paddingTop: 20, marginBottom: 16, textAlign: "center",
+            }}>
+              {!showPromoInput ? (
+                <button
+                  onClick={() => setShowPromoInput(true)}
+                  style={{
+                    background: "none", border: "none",
+                    color: "rgba(245,238,216,0.28)",
+                    fontFamily: "'Cormorant Garamond', Georgia, serif",
+                    fontSize: 13, letterSpacing: "0.1em",
+                    cursor: "pointer", fontStyle: "italic",
+                    textDecoration: "underline",
+                    textDecorationColor: "rgba(245,238,216,0.12)",
+                  }}
+                >Have a promo code?</button>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <input
+                      type="text"
+                      value={promoCode}
+                      onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                      onKeyDown={(e) => e.key === "Enter" && void handlePromoSubmit()}
+                      placeholder="PROMO CODE"
+                      maxLength={32}
+                      style={{
+                        background: "rgba(245,230,200,0.06)",
+                        border: "1px solid rgba(245,230,200,0.15)",
+                        borderRadius: 8, padding: "8px 14px",
+                        color: "#f5eed8",
+                        fontFamily: "'Cormorant Garamond', Georgia, serif",
+                        fontSize: 14, letterSpacing: "0.15em",
+                        outline: "none", width: 160, textAlign: "center",
+                      }}
+                    />
+                    <button
+                      onClick={() => void handlePromoSubmit()}
+                      disabled={promoLoading || !promoCode.trim()}
+                      style={{
+                        background: "rgba(180,150,80,0.2)",
+                        border: "1px solid rgba(180,150,80,0.35)",
+                        borderRadius: 8, padding: "8px 16px",
+                        color: "rgba(180,150,80,0.85)",
+                        fontFamily: "'Cormorant SC', Georgia, serif",
+                        fontSize: 13, letterSpacing: "0.15em",
+                        cursor: promoLoading || !promoCode.trim() ? "default" : "pointer",
+                        opacity: promoLoading || !promoCode.trim() ? 0.5 : 1,
+                        transition: "all 0.2s",
+                      }}
+                    >{promoLoading ? "…" : "Apply"}</button>
+                  </div>
+                  {promoMessage && (
+                    <div style={{
+                      fontFamily: "'Cormorant Garamond', Georgia, serif",
+                      fontSize: 13, fontStyle: "italic",
+                      color: promoMessage.ok ? "rgba(100,200,130,0.8)" : "rgba(220,120,100,0.8)",
+                      letterSpacing: "0.05em",
+                    }}>{promoMessage.text}</div>
+                  )}
+                </div>
+              )}
             </div>
 
             <button

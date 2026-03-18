@@ -159,7 +159,7 @@ export default function PlaybackScreen({ story, seed, daas: _daas, audioUrl, onR
       ambient.play().catch(() => {});
     }
     narrateTimeoutRef.current = setTimeout(() => {
-      audio.play().then(() => setPlaying(true)).catch(() => {});
+      audio.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
     }, 1000);
 
     return () => {
@@ -217,7 +217,7 @@ export default function PlaybackScreen({ story, seed, daas: _daas, audioUrl, onR
         ambientRef.current?.play().catch(() => {});
       }
       narrateTimeoutRef.current = setTimeout(() => {
-        audio.play().then(() => setPlaying(true)).catch(() => {});
+        audio.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
       }, 1000);
     }
   };
